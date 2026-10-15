@@ -1,12 +1,11 @@
-# 每周更新论文数据并部署到 GitHub Pages。
-# 需要在仓库 Settings → Secrets and variables → Actions 里配置：
-#   Secrets:   DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, S2_API_KEY（可选）
-#   Variables: PRICE_INPUT, PRICE_OUTPUT（可选，用于日志里的成本统计）
-# 并在 Settings → Pages 里把 Source 设为 "GitHub Actions"。
-name: update-and-deploy
+# 用仓库里已提交的 web/public/papers.json 构建前端，部署到 GitHub Pages。
+# 不调用任何 LLM 或外部 API，不需要配置 Secrets。
+# 首次使用：仓库 Settings → Pages → Build and deployment → Source 选 "GitHub Actions"。
+name: deploy-pages
 
-# 项目已暂停：关闭每周定时任务，只保留手动触发
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,39 +15,19 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
-
-      # 缓存抓取结果和 LLM 结果：每周只需处理新增论文
-      - uses: actions/cache@v4
-        with:
-          path: .cache
-          key: radar-cache-${{ github.run_id }}
-          restore-keys: radar-cache-
-
-      - uses: astral-sh/setup-uv@v6
-      - name: Build dataset
-        env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          DEEPSEEK_BASE_URL: ${{ secrets.DEEPSEEK_BASE_URL }}
-          S2_API_KEY: ${{ secrets.S2_API_KEY }}
-          PRICE_INPUT: ${{ vars.PRICE_INPUT }}
-          PRICE_OUTPUT: ${{ vars.PRICE_OUTPUT }}
-        run: uv run python -m paper_radar.build
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Build site
         working-directory: web
         run: npm ci && npm test && npm run build
-
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist

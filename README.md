@@ -35,7 +35,10 @@ LLM 结果缓存在 `.cache/`，重跑不会重复计费；已结束月份的 ar
 
 ## 部署
 
-`.github/workflows/update.yml` 每周一自动更新数据并部署到 GitHub Pages，配置方法见文件顶部注释。
+在线访问：https://polosnow-0926.github.io/PaperReader/
+
+每次推送到 `main`，`.github/workflows/update.yml` 会用仓库里的 `web/public/papers.json` 构建前端并部署到 GitHub Pages，不调用任何 API。
+首次需要在仓库 Settings → Pages 里把 Source 设为 "GitHub Actions"。
 
 ## 试点（已完成）
 
