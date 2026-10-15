@@ -1,0 +1,64 @@
+# 每周更新论文数据并部署到 GitHub Pages。
+# 需要在仓库 Settings → Secrets and variables → Actions 里配置：
+#   Secrets:   DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, S2_API_KEY（可选）
+#   Variables: PRICE_INPUT, PRICE_OUTPUT（可选，用于日志里的成本统计）
+# 并在 Settings → Pages 里把 Source 设为 "GitHub Actions"。
+name: update-and-deploy
+
+# 项目已暂停：关闭每周定时任务，只保留手动触发
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      # 缓存抓取结果和 LLM 结果：每周只需处理新增论文
+      - uses: actions/cache@v4
+        with:
+          path: .cache
+          key: radar-cache-${{ github.run_id }}
+          restore-keys: radar-cache-
+
+      - uses: astral-sh/setup-uv@v6
+      - name: Build dataset
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_BASE_URL: ${{ secrets.DEEPSEEK_BASE_URL }}
+          S2_API_KEY: ${{ secrets.S2_API_KEY }}
+          PRICE_INPUT: ${{ vars.PRICE_INPUT }}
+          PRICE_OUTPUT: ${{ vars.PRICE_OUTPUT }}
+        run: uv run python -m paper_radar.build
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build site
+        working-directory: web
+        run: npm ci && npm test && npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

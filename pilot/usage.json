@@ -1,0 +1,37 @@
+{
+ "model": "deepseek-v4-flash-0731",
+ "pilot": {
+  "papers": 103,
+  "failed": 0,
+  "classify": {
+   "calls": 103,
+   "prompt_tokens": 76272,
+   "cache_hit_tokens": 0,
+   "completion_tokens": 23800
+  },
+  "extract": {
+   "calls": 80,
+   "prompt_tokens": 359473,
+   "cache_hit_tokens": 0,
+   "completion_tokens": 210511
+  },
+  "cost_usd": null
+ },
+ "avg_tokens_per_call": {
+  "classify": {
+   "prompt_tokens": 741,
+   "completion_tokens": 231
+  },
+  "extract": {
+   "prompt_tokens": 4493,
+   "completion_tokens": 2631
+  }
+ },
+ "full_run_estimate": {
+  "assumption": "15000 篇候选分类 + 4000 篇字段抽取",
+  "prompt_tokens": 29081223,
+  "cache_hit_tokens": 0,
+  "completion_tokens": 13991569,
+  "cost_usd": null
+ }
+}
